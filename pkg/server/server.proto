@@ -4,6 +4,8 @@ option go_package = "github.com/linuxsuren/api-testing/pkg/server";
 
 package server;
 
+import "google/protobuf/timestamp.proto";
+
 service Runner {
     // belong to a specific store
     rpc Run (TestTask) returns (TestResult) {}
@@ -24,6 +26,10 @@ service Runner {
     rpc CreateTestCase(TestCaseWithSuite) returns (HelloReply) {}
     rpc UpdateTestCase(TestCaseWithSuite) returns (HelloReply) {}
     rpc DeleteTestCase(TestCaseIdentity) returns (HelloReply) {}
+
+    // history test related
+    rpc GetHistorySuites(Empty) returns (HistorySuites) {}
+    rpc GetHistoryTestCase(HistoryTestCase) returns (HistoryTestResult) {}
 
     // code generator
     rpc ListCodeGenerator(Empty) returns (SimpleList) {}
@@ -69,6 +75,22 @@ message Suites {
 message Items {
   repeated string data = 1;
   string kind = 2;
+}
+
+message HistorySuites {
+  map<string, HistoryItems> data = 1;
+}
+
+message HistoryItems {
+  repeated HistoryCaseIdentity data = 1;
+}
+
+message HistoryCaseIdentity {
+  string suite = 1;
+  string testcase = 2;
+  string historySuiteName = 3;
+  string kind = 4;
+  string ID = 5;
 }
 
 message TestCaseIdentity {
@@ -139,6 +161,15 @@ message TestResult {
   repeated TestCaseResult testCaseResult = 3;
 }
 
+message HistoryTestResult {
+  string message = 1;
+  string error = 2;
+  repeated TestCaseResult testCaseResult = 3;
+  HistoryTestCase data = 4;
+  google.protobuf.Timestamp createTime = 5;
+}
+
+
 message HelloReply {
   string message = 1;
   string error = 2;
@@ -168,6 +199,19 @@ message TestCase {
   string suiteName = 2;
   Request request = 3;
   Response response = 4;
+}
+
+message HistoryTestCase {
+  string caseName = 1;
+  string suiteName = 2;
+  string historySuiteName = 3;
+  google.protobuf.Timestamp createTime = 4;
+  repeated Pair suiteParam = 5;
+  APISpec suiteSpec = 6;
+  string suiteApi = 7;
+  Request request = 8;
+  Response response = 9;
+  string ID = 10;
 }
 
 message Request {
@@ -275,18 +319,18 @@ message Secret {
 }
 
 message ExtensionStatus {
-    bool ready = 1;
-    bool readOnly = 2;
-    string version = 3;
-    string message = 4;
+  bool ready = 1;
+  bool readOnly = 2;
+  string version = 3;
+  string message = 4;
 }
 
 message PProfRequest {
-    string name = 1;
+  string name = 1;
 }
 
 message PProfData {
-    bytes data = 1;
+  bytes data = 1;
 }
 
 message Empty {

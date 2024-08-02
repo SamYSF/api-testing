@@ -171,6 +171,10 @@ interface TestCase {
   method: string
 }
 
+interface HistoryTestCase {
+  historyCaseID : string
+}
+
 function CreateTestCase(testcase: TestCase,
   callback: (d: any) => void, errHandle?: (e: any) => void | null) {
   const requestOptions = {
@@ -550,11 +554,30 @@ const GetTestSuiteYaml = (suite: string, store: string, callback: (d: any) => vo
     .catch(errHandle)
 }
 
+
+function GetHistoryTestCase(req: HistoryTestCase,
+  callback: (d: any) => void, errHandle?: (e: any) => void | null) {
+  const requestOptions = {
+    method: 'POST',
+    headers: {
+      'X-Store-Name': Cache.GetCurrentStore().name,
+      'X-Auth': getToken()
+    },
+    body: JSON.stringify({
+      ID : req.historyCaseID
+    })
+  }
+  fetch('/server.Runner/GetHistoryTestCase', requestOptions)
+    .then(DefaultResponseProcess)
+    .then(callback).catch(errHandle)
+}
+
 export const API = {
   DefaultResponseProcess,
   GetVersion,
   CreateTestSuite, UpdateTestSuite, ImportTestSuite, GetTestSuite, DeleteTestSuite, ConvertTestSuite,GetTestSuiteYaml,
   CreateTestCase, UpdateTestCase, GetTestCase, ListTestCase, DeleteTestCase, RunTestCase,
+  GetHistoryTestCase,
   GenerateCode, ListCodeGenerator,
   PopularHeaders,
   CreateOrUpdateStore, GetStores, DeleteStore, VerifyStore,

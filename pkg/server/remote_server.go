@@ -300,6 +300,33 @@ func (s *server) GetSuites(ctx context.Context, in *Empty) (reply *Suites, err e
 	return
 }
 
+func (s *server) GetHistorySuites(ctx context.Context, in *Empty) (reply *HistorySuites, err error) {
+	loader := s.getLoader(ctx)
+	defer loader.Close()
+	reply = &HistorySuites{
+		Data: make(map[string]*HistoryItems),
+	}
+
+	var suites []testing.HistoryTestSuite
+	if suites, err = loader.ListHistoryTestSuite(); err == nil && suites != nil {
+		for _, suite := range suites {
+			items := &HistoryItems{}
+			for _, item := range suite.Items {
+				data := &HistoryCaseIdentity{
+					ID:               item.ID,
+					HistorySuiteName: item.HistorySuiteName,
+					Kind:             item.SuiteSpec.Kind,
+					Suite:            item.SuiteName,
+					Testcase:         item.CaseName,
+				}
+				items.Data = append(items.Data, data)
+			}
+			reply.Data[suite.HistorySuiteName] = items
+		}
+	}
+	return
+}
+
 func (s *server) CreateTestSuite(ctx context.Context, in *TestSuiteIdentity) (reply *HelloReply, err error) {
 	reply = &HelloReply{}
 	loader := s.getLoader(ctx)
@@ -428,6 +455,16 @@ func (s *server) GetTestCase(ctx context.Context, in *TestCaseIdentity) (reply *
 	return
 }
 
+func (s *server) GetHistoryTestCase(ctx context.Context, in *HistoryTestCase) (reply *HistoryTestResult, err error) {
+	var result testing.HistoryTestResult
+	loader := s.getLoader(ctx)
+	defer loader.Close()
+	if result, err = loader.GetHistoryTestCase(in.ID); err == nil {
+		reply = ToGRPCHistoryTestCaseResult(result)
+	}
+	return
+}
+
 func (s *server) RunTestCase(ctx context.Context, in *TestCaseIdentity) (result *TestCaseResult, err error) {
 	var targetTestSuite testing.TestSuite
 
@@ -484,6 +521,19 @@ func (s *server) RunTestCase(ctx context.Context, in *TestCaseIdentity) (result 
 			result = &TestCaseResult{
 				Output: reply.Message,
 				Error:  reply.Error,
+			}
+		}
+		normalResult := ToNormalTestCaseResult(result)
+		var testSuite *testing.TestSuite
+		if testSuite, err = s.getSuiteFromTestTask(task); err != nil {
+			result = &TestCaseResult{
+				Error: err.Error(),
+			}
+		}
+		err = loader.CreateHistoryTestCase(normalResult, testSuite)
+		if err != nil {
+			result = &TestCaseResult{
+				Error: err.Error(),
 			}
 		}
 	}

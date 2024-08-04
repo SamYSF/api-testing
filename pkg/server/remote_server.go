@@ -141,6 +141,20 @@ func (s *server) getSuiteFromTestTask(task *TestTask) (suite *testing.TestSuite,
 		suite = &testing.TestSuite{
 			Items: []testing.TestCase{*testCase},
 		}
+	case "historyTestcase":
+		var historyTestCase *testing.HistoryTestCase
+		if historyTestCase, err = testing.ParseHistoryTestCaseFromData([]byte(task.Data)); err != nil {
+			return
+		}
+		testCase := historyTestCase.Data
+		testCase.Name = historyTestCase.CaseName
+		suite = &testing.TestSuite{
+			Name:  historyTestCase.SuiteName,
+			API:   historyTestCase.SuiteAPI,
+			Spec:  historyTestCase.SuiteSpec,
+			Param: historyTestCase.SuiteParam,
+			Items: []testing.TestCase{testCase},
+		}
 	case "testcaseInSuite":
 		suite, err = parseSuiteWithItems([]byte(task.Data))
 		if err != nil {
@@ -455,12 +469,22 @@ func (s *server) GetTestCase(ctx context.Context, in *TestCaseIdentity) (reply *
 	return
 }
 
-func (s *server) GetHistoryTestCase(ctx context.Context, in *HistoryTestCase) (reply *HistoryTestResult, err error) {
+func (s *server) GetHistoryTestCaseWithResult(ctx context.Context, in *HistoryTestCase) (reply *HistoryTestResult, err error) {
 	var result testing.HistoryTestResult
 	loader := s.getLoader(ctx)
 	defer loader.Close()
-	if result, err = loader.GetHistoryTestCase(in.ID); err == nil {
+	if result, err = loader.GetHistoryTestCaseWithResult(in.ID); err == nil {
 		reply = ToGRPCHistoryTestCaseResult(result)
+	}
+	return
+}
+
+func (s *server) GetHistoryTestCase(ctx context.Context, in *HistoryTestCase) (reply *HistoryTestCase, err error) {
+	var result testing.HistoryTestCase
+	loader := s.getLoader(ctx)
+	defer loader.Close()
+	if result, err = loader.GetHistoryTestCase(in.ID); err == nil {
+		reply = ConvertToGRPCHistoryTestCase(result)
 	}
 	return
 }
@@ -489,6 +513,81 @@ func (s *server) RunTestCase(ctx context.Context, in *TestCaseIdentity) (result 
 			Parameters: in.Parameters,
 		}
 
+		var reply *TestResult
+		if reply, err = s.Run(ctx, task); err == nil && len(reply.TestCaseResult) > 0 {
+			lastIndex := len(reply.TestCaseResult) - 1
+			lastItem := reply.TestCaseResult[lastIndex]
+
+			if len(lastItem.Body) > GrpcMaxRecvMsgSize {
+				e := "the HTTP response body exceeded the maximum message size limit received by the gRPC client"
+				result = &TestCaseResult{
+					Output:     reply.Message,
+					Error:      e,
+					Body:       "",
+					Header:     lastItem.Header,
+					StatusCode: http.StatusOK,
+				}
+				return
+			}
+
+			result = &TestCaseResult{
+				Output:     reply.Message,
+				Error:      reply.Error,
+				Body:       lastItem.Body,
+				Header:     lastItem.Header,
+				StatusCode: lastItem.StatusCode,
+			}
+		} else if err != nil {
+			result = &TestCaseResult{
+				Error: err.Error(),
+			}
+		} else {
+			result = &TestCaseResult{
+				Output: reply.Message,
+				Error:  reply.Error,
+			}
+		}
+		normalResult := ToNormalTestCaseResult(result)
+		var testSuite *testing.TestSuite
+		if testSuite, err = s.getSuiteFromTestTask(task); err != nil {
+			result = &TestCaseResult{
+				Error: err.Error(),
+			}
+		}
+		err = loader.CreateHistoryTestCase(normalResult, testSuite)
+		if err != nil {
+			result = &TestCaseResult{
+				Error: err.Error(),
+			}
+		}
+	}
+	return
+}
+
+func (s *server) RunHistoryTestCase(ctx context.Context, in *HistoryTestCase) (result *TestCaseResult, err error) {
+	var targetTestCase testing.HistoryTestCase
+
+	loader := s.getLoader(ctx)
+	defer loader.Close()
+	targetTestCase, err = loader.GetHistoryTestCase(in.ID)
+	if err != nil {
+		err = nil
+		result = &TestCaseResult{
+			Error: fmt.Sprintf("not found : %s", in.ID),
+		}
+		return
+	}
+
+	var data []byte
+	if data, err = yaml.Marshal(targetTestCase); err == nil {
+		task := &TestTask{
+			Kind:       "historyTestcase",
+			Data:       string(data),
+			CaseName:   targetTestCase.CaseName,
+			Level:      "debug",
+			Parameters: in.SuiteParam,
+		}
+		//todo
 		var reply *TestResult
 		if reply, err = s.Run(ctx, task); err == nil && len(reply.TestCaseResult) > 0 {
 			lastIndex := len(reply.TestCaseResult) - 1
@@ -627,6 +726,14 @@ func (s *server) DeleteTestCase(ctx context.Context, in *TestCaseIdentity) (repl
 	defer loader.Close()
 	reply = &HelloReply{}
 	err = loader.DeleteTestCase(in.Suite, in.Testcase)
+	return
+}
+
+func (s *server) DeleteHistoryTestCase(ctx context.Context, in *HistoryTestCase) (reply *HelloReply, err error) {
+	loader := s.getLoader(ctx)
+	defer loader.Close()
+	reply = &HelloReply{}
+	err = loader.DeleteHistoryTestCase(in.ID)
 	return
 }
 

@@ -96,6 +96,13 @@ func ParseTestCaseFromData(data []byte) (testCase *TestCase, err error) {
 	return
 }
 
+// ParseHistoryTestCaseFromData parses the data to a test case history
+func ParseHistoryTestCaseFromData(data []byte) (historyTstCase *HistoryTestCase, err error) {
+	historyTstCase = &HistoryTestCase{}
+	err = yaml.Unmarshal(data, historyTstCase)
+	return
+}
+
 // ParseTestSuiteFromFile parses from suite path
 func ParseTestSuiteFromFile(suitePath string) (testSuite *TestSuite, err error) {
 	var data []byte

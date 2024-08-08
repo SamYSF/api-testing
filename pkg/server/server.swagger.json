@@ -803,6 +803,38 @@
         ]
       }
     },
+    "/server.Runner/GetTestCaseAllHistory": {
+      "post": {
+        "operationId": "Runner_GetTestCaseAllHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/serverHistoryTestCases"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/serverTestCase"
+            }
+          }
+        ],
+        "tags": [
+          "Runner"
+        ]
+      }
+    },
     "/server.Runner/GetTestSuite": {
       "post": {
         "operationId": "Runner_GetTestSuite",
@@ -1617,6 +1649,19 @@
         },
         "ID": {
           "type": "string"
+        }
+      },
+      "title": "todo TestCase和HistoryTestCase合并一下，这样就方便了"
+    },
+    "serverHistoryTestCases": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/serverHistoryTestCase"
+          }
         }
       }
     },

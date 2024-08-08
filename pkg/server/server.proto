@@ -33,6 +33,7 @@ service Runner {
     rpc GetHistoryTestCase(HistoryTestCase) returns (HistoryTestCase) {}
     rpc DeleteHistoryTestCase(HistoryTestCase) returns (HelloReply) {}
     rpc RunHistoryTestCase(HistoryTestCase) returns (TestCaseResult) {}
+   rpc GetTestCaseAllHistory(TestCase) returns (HistoryTestCases){}
 
     // code generator
     rpc ListCodeGenerator(Empty) returns (SimpleList) {}
@@ -100,7 +101,7 @@ message TestCaseIdentity {
   string suite = 1;
   string testcase = 2;
   repeated Pair parameters = 3;
-  
+
 }
 
 message TestSuiteSource {
@@ -204,7 +205,7 @@ message TestCase {
   Request request = 3;
   Response response = 4;
 }
-
+// todo TestCase和HistoryTestCase合并一下，这样就方便了
 message HistoryTestCase {
   string caseName = 1;
   string suiteName = 2;
@@ -216,6 +217,20 @@ message HistoryTestCase {
   Request request = 8;
   Response response = 9;
   string ID = 10;
+}
+
+// message HistoryTestCase {
+//   TestCase testcase = 1;
+//   string historySuiteName = 2;
+//   google.protobuf.Timestamp createTime = 3;
+//   repeated Pair suiteParam = 4;
+//   APISpec suiteSpec = 5;
+//   string suiteApi = 6;
+//   string ID = 7;
+// }
+
+message HistoryTestCases{
+  repeated HistoryTestCase data = 1;
 }
 
 message Request {

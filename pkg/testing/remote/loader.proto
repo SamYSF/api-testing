@@ -24,7 +24,7 @@ service Loader {
     rpc GetHistoryTestCaseWithResult(server.HistoryTestCase) returns (server.HistoryTestResult) {}
     rpc GetHistoryTestCase(server.HistoryTestCase) returns (server.HistoryTestCase) {}
     rpc DeleteHistoryTestCase(server.HistoryTestCase) returns (server.Empty) {}
-
+   rpc GetTestCaseAllHistory(server.TestCase) returns (server.HistoryTestCases) {}
 
     rpc Verify(server.Empty) returns (server.ExtensionStatus) {}
     rpc PProf(server.PProfRequest) returns (server.PProfData) {}

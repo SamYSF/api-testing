@@ -74,8 +74,10 @@ function RunTestCase(name, suite){
 
       requestLoading.value = false
       UIAPI.ErrorTip(e)
-      testResult.value.bodyObject = JSON.parse(e.body)
-      testResult.value.originBodyObject = JSON.parse(e.body)
+      if (e.body !== undefined && e.body !== null){
+        testResult.value.bodyObject = JSON.parse(e.body)
+        testResult.value.originBodyObject = JSON.parse(e.body)
+      }
   })
 }
 
@@ -90,8 +92,10 @@ function RunHistoryTestCase(historyCaseID : string){
       parameters.value = []
       requestLoading.value = false
       UIAPI.ErrorTip(e)
-      testResult.value.bodyObject = JSON.parse(e.body)
-      testResult.value.originBodyObject = JSON.parse(e.body)
+      if (e.body !== undefined && e.body !== null){
+        testResult.value.bodyObject = JSON.parse(e.body)
+        testResult.value.originBodyObject = JSON.parse(e.body)
+      }
   })
 }
 

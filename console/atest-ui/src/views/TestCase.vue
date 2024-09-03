@@ -37,7 +37,7 @@ const props = defineProps({
   historySuiteName: String,
   historyCaseID: String
 })
-const emit = defineEmits(['updated'])
+const emit = defineEmits(['updated','toHistoryPanel'])
 
 let querySuggestedAPIs = NewSuggestedAPIsQuery(Cache.GetCurrentStore().name!, props.suite!)
 const testResultActiveTab = ref(Cache.GetPreference().responseActiveTab)
@@ -534,6 +534,21 @@ const submitForm = async (formEl) => {
   })
 }
 
+const goToHistory = async (formEl) => {
+  if (!formEl) return
+  await formEl.validate((valid: boolean, fields) => {
+    if (valid) {
+      caseRevertLoading.value = true
+      emit('toHistoryPanel', { ID: selectedHistory.value.ID, panelName: 'history' });
+      caseRevertLoading.value = false
+      historyDialogOpened.value = false
+      historyForm.value.selectedID = ''
+      const target = document.getElementById('compareView');
+      target.innerHTML = '';
+    }
+  })
+}
+
 const options = GetHTTPMethods()
 const requestActiveTab = ref(Cache.GetPreference().requestActiveTab)
 watch(requestActiveTab, Cache.WatchRequestActiveTab)
@@ -745,13 +760,10 @@ Magic.Keys(() => {
     <el-header style="padding-left: 5px;">
       <div style="margin-bottom: 5px">
         <el-button type="primary" @click="saveTestCase" :icon="Edit" :loading="saveLoading"
-          disabled v-if="Cache.GetCurrentStore().readOnly || isHistoryTestCase"
-          >{{ t('button.save') }}</el-button>
-        <el-button type="primary" @click="saveTestCase" :icon="Edit" :loading="saveLoading"
           v-if="!Cache.GetCurrentStore().readOnly && !isHistoryTestCase"
           >{{ t('button.save') }}</el-button>
         <el-button type="danger" @click="deleteCase" :icon="Delete">{{ t('button.delete') }}</el-button>
-        <el-button type="primary" @click="openDuplicateTestCaseDialog" :icon="CopyDocument">{{ t('button.duplicate') }}</el-button>
+        <el-button type="primary" @click="openDuplicateTestCaseDialog" :icon="CopyDocument" v-if="!isHistoryTestCase">{{ t('button.duplicate') }}</el-button>
         <el-button type="primary" @click="openCodeDialog">{{ t('button.generateCode') }}</el-button>
         <el-button type="primary" v-if="!isHistoryTestCase" @click="openHistoryDialog">{{ t('button.viewHistory') }}</el-button>
         <span v-if="isHistoryTestCase" style="margin-left: 15px;">{{ t('tip.runningAt') }}{{ HistoryTestCaseCreateTime }}</span>
@@ -1052,12 +1064,20 @@ Magic.Keys(() => {
                 </el-select>
               </el-col>
               <el-col :span="4">
+              <div style="display: flex">
                 <el-button
                   type="primary"
                   @click="submitForm(viewHistoryRef)"
                   :loading="caseRevertLoading"
                   >{{ t('button.revert') }}
                 </el-button>
+                <el-button
+                  type="primary"
+                  @click="goToHistory(viewHistoryRef)"
+                  :loading="caseRevertLoading"
+                  >{{ t('button.goToHistory') }}
+                </el-button>
+              </div>
               </el-col>
             </el-row>
           </el-form-item>

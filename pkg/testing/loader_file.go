@@ -425,7 +425,7 @@ func (l *fileLoader) DeleteTestCase(suiteName, testcase string) (err error) {
 	return
 }
 
-func (l *fileLoader) CreateHistoryTestCase(testcaseResult TestCaseResult, suiteName *TestSuite) (err error) {	// always be okay
+func (l *fileLoader) CreateHistoryTestCase(testcaseResult TestCaseResult, suiteName *TestSuite) (err error) { // always be okay
 	return
 }
 
@@ -442,6 +442,10 @@ func (l *fileLoader) GetHistoryTestCase(id string) (testcase HistoryTestCase, er
 }
 
 func (l *fileLoader) DeleteHistoryTestCase(id string) (err error) {
+	return
+}
+
+func (l *fileLoader) DeleteAllHistoryTestCase(suite, name string) (err error) {
 	return
 }
 

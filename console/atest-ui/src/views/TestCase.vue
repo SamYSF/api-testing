@@ -800,6 +800,7 @@ Magic.Keys(() => {
           :fetch-suggestions="querySuggestedAPIs"
           placeholder="API Address"
           style="width: 50%; margin-left: 5px; margin-right: 5px; flex-grow: 1;"
+          :readonly="isHistoryTestCase"
         >
           <template #default="{ item }">
             <div class="value">{{ item.request.method }}</div>
@@ -807,7 +808,7 @@ Magic.Keys(() => {
           </template>
         </el-autocomplete>
 
-        <el-dropdown split-button type="primary" @click="sendRequest" :loading="requestLoading">
+        <el-dropdown split-button type="primary" @click="sendRequest" :loading="requestLoading" v-if="!isHistoryTestCase">
           {{ t('button.send') }}
           <template #dropdown>
             <el-dropdown-menu>
@@ -832,13 +833,14 @@ Magic.Keys(() => {
                   v-model="scope.row.key"
                   placeholder="Key"
                   @change="queryChange"
+                  :readonly="isHistoryTestCase"
                 />
               </template>
             </el-table-column>
             <el-table-column label="Value">
               <template #default="scope">
                 <div style="display: flex; align-items: center">
-                  <el-input v-model="scope.row.value" placeholder="Value" />
+                  <el-input v-model="scope.row.value" placeholder="Value" :readonly="isHistoryTestCase"/>
                 </div>
               </template>
             </el-table-column>
@@ -859,6 +861,7 @@ Magic.Keys(() => {
                   placeholder="Key"
                   @change="headerChange"
                   @select="headerSelect"
+                  :readonly="isHistoryTestCase"
                 />
               </template>
             </el-table-column>
@@ -869,6 +872,7 @@ Magic.Keys(() => {
                     v-model="scope.row.value"
                     :fetch-suggestions="queryHeaderValues"
                     style="width: 100%;"
+                    :readonly="isHistoryTestCase"
                   />
                 </div>
               </template>
@@ -886,13 +890,14 @@ Magic.Keys(() => {
               <template #default="scope">
                 <el-input v-model="scope.row.key" placeholder="Key"
                 @change="cookieChange"
+                :readonly="isHistoryTestCase"
                 />
               </template>
             </el-table-column>
             <el-table-column label="Value">
               <template #default="scope">
                 <div style="display: flex; align-items: center">
-                  <el-input v-model="scope.row.value" placeholder="value" />
+                  <el-input v-model="scope.row.value" placeholder="value" :readonly="isHistoryTestCase"/>
                 </div>
               </template>
             </el-table-column>
@@ -919,17 +924,18 @@ Magic.Keys(() => {
           <div style="flex-grow: 1;">
             <Codemirror v-if="bodyType === 3 || bodyType === 5"
               @blur="jsonFormat(-1)"
-              v-model="testCaseWithSuite.data.request.body"/>
+              v-model="testCaseWithSuite.data.request.body"
+              :disabled="isHistoryTestCase"/>
             <el-table :data="testCaseWithSuite.data.request.form" style="width: 100%" v-if="bodyType === 4">
               <el-table-column label="Key" width="180">
                 <template #default="scope">
-                  <el-input v-model="scope.row.key" placeholder="Key" @change="formChange"/>
+                  <el-input v-model="scope.row.key" placeholder="Key" @change="formChange" :readonly="isHistoryTestCase"/>
                 </template>
               </el-table-column>
               <el-table-column label="Value">
                 <template #default="scope">
                   <div style="display: flex; align-items: center">
-                    <el-input v-model="scope.row.value" placeholder="Value" />
+                    <el-input v-model="scope.row.value" placeholder="Value" :readonly="isHistoryTestCase"/>
                   </div>
                 </template>
               </el-table-column>
@@ -952,6 +958,7 @@ Magic.Keys(() => {
               class="w-50 m-2"
               placeholder="Please input"
               style="width: 200px"
+              :readonly="isHistoryTestCase"
             />
           </el-row>
           <el-input
@@ -959,6 +966,7 @@ Magic.Keys(() => {
             :autosize="{ minRows: 4, maxRows: 8 }"
             type="textarea"
             placeholder="Expected Body"
+            :readonly="isHistoryTestCase"
           />
         </el-tab-pane>
 
@@ -970,13 +978,14 @@ Magic.Keys(() => {
                   v-model="scope.row.key"
                   placeholder="Key"
                   @change="expectedHeaderChange"
+                  :readonly="isHistoryTestCase"
                 />
               </template>
             </el-table-column>
             <el-table-column label="Value">
               <template #default="scope">
                 <div style="display: flex; align-items: center">
-                  <el-input v-model="scope.row.value" placeholder="Value" />
+                  <el-input v-model="scope.row.value" placeholder="Value" :readonly="isHistoryTestCase"/>
                 </div>
               </template>
             </el-table-column>
@@ -993,13 +1002,14 @@ Magic.Keys(() => {
                   clearable
                   placeholder="Key"
                   @change="bodyFiledExpectChange"
+                  :readonly="isHistoryTestCase"
                 />
               </template>
             </el-table-column>
             <el-table-column label="Value">
               <template #default="scope">
                 <div style="display: flex; align-items: center">
-                  <el-input v-model="scope.row.value" placeholder="Value" />
+                  <el-input v-model="scope.row.value" placeholder="Value" :readonly="isHistoryTestCase"/>
                 </div>
               </template>
             </el-table-column>
@@ -1008,7 +1018,7 @@ Magic.Keys(() => {
 
         <el-tab-pane label="Verify" name="verify" v-if="props.kindName !== 'tRPC' && props.kindName !== 'gRPC'">
           <div v-for="verify in testCaseWithSuite.data.response.verify" :key="verify">
-            <el-input :value="verify" />
+            <el-input :value="verify" :readonly="isHistoryTestCase"/>
           </div>
         </el-tab-pane>
 
@@ -1017,6 +1027,7 @@ Magic.Keys(() => {
             v-model="testCaseWithSuite.data.response.schema"
             :autosize="{ minRows: 4, maxRows: 20 }"
             type="textarea"
+            :readonly="isHistoryTestCase"
           />
         </el-tab-pane>
       </el-tabs>
